@@ -7,6 +7,10 @@ package com.zy.matchgame.enums;
 public enum MessageTypeEnum {
 
     /**
+     * 系统信息
+     */
+    SYSTEM,
+    /**
      * 用户加入
      */
     ADD_USER,
