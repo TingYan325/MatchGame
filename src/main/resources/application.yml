@@ -1,0 +1,22 @@
+#spring.application.name=MatchGame
+#jdbc:mysql://localhost:3306/match_game
+spring:
+  application:
+    name: MatchGame
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    password: 1234
+    username: root
+    url: jdbc:mysql://localhost:3306/match_game
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      logic-delete-field: del_flag
+springdoc:
+  api-docs:
+    enabled: true # ??OpenApi??
+  swagger-ui:
+    enabled: true # ??swagger?????OpenApi???OpenApi????
