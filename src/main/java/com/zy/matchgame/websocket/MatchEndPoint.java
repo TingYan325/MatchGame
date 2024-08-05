@@ -1,13 +1,20 @@
 package com.zy.matchgame.websocket;
 
+import com.alibaba.fastjson.JSON;
 import com.zy.matchgame.config.GetHttpSessionConfig;
+import com.zy.matchgame.entity.Response;
 import com.zy.matchgame.utils.MatchUtil;
+import com.zy.matchgame.utils.ResponseUtil;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
+@Slf4j
 @ServerEndpoint(value = "/match", configurator = GetHttpSessionConfig.class)
 @Component
 public class MatchEndPoint {
@@ -17,10 +24,22 @@ public class MatchEndPoint {
     @Autowired
     private MatchUtil matchUtil;
 
+    @Autowired
+    private ResponseUtil responseUtil;
+
+    /**
+     * 建立websocket连接成功，将session和用户名保存
+     * @param session
+     * @param config
+     * @return
+     */
     @OnOpen
     public void onOpen(Session session, EndpointConfig config) {
+        //获取用户名,将用户名和session保存在MatchUtil里的map中
         this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
         matchUtil.addUser((String) httpSession.getAttribute("userName"), session);
+        //返回系统成功信息
+        sendToUser(responseUtil.response_Success((String) httpSession.getAttribute("userName")));
     }
 
     @OnMessage
