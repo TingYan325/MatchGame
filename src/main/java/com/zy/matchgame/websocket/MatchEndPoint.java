@@ -42,6 +42,21 @@ public class MatchEndPoint {
         sendToUser(responseUtil.response_Success((String) httpSession.getAttribute("userName")));
     }
 
+    /**
+     * 根据响应消息中的接收者集合来给相应的客户端响应消息
+     * @param responseBody
+     */
+    private void sendToUser(Response<?> responseBody) {
+        log.info("ChatWebsocket sendMessageAll 消息群发开始");
+
+        Set<String> receivers = responseBody.getResponseMsg().getReceivers();
+        for (String receiver : receivers) {
+            MatchUtil.getOnlineUser(receiver).getAsyncRemote().sendText(JSON.toJSONString(responseBody));
+        }
+
+        log.info("ChatWebsocket sendMessageAll 消息群发结束");
+    }
+
     @OnMessage
     public void onMessage(String message) {
 
