@@ -62,9 +62,13 @@ public class MatchEndPoint {
 
     }
 
+    /**
+     * 在websocket断开连接时调用，删除用户存储的session
+     * @param session
+     */
     @OnClose
     public void onClose(Session session) {
-
+        matchUtil.removeUser((String) httpSession.getAttribute("userName"));
     }
 
 }
