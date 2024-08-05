@@ -4,7 +4,6 @@ import com.zy.matchgame.entity.Response;
 import com.zy.matchgame.entity.ResponseMsg;
 import com.zy.matchgame.enums.MessageCode;
 import com.zy.matchgame.enums.MessageTypeEnum;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -20,13 +19,18 @@ public class ResponseUtil {
     public Response<String> response_Success(String userName) {
         Response response = new Response();
         ResponseMsg<String> responseMsg = new ResponseMsg<>();
+        //设置respond里面的响应码和描述
         response.setCode(MessageCode.SUCCESS.getCode().toString());
         response.setDesc(MessageCode.SUCCESS.getDesc());
+        //设置respondMsg里面的消息类型为系统信息
         responseMsg.setType(MessageTypeEnum.SYSTEM);
+        //设置respondMsg里面的发送者为NULL
         responseMsg.setSender("NULL");
+        //设置respondMsg里面的接收者为该用户
         Set<String> set = new HashSet<>();
         set.add(userName);
         responseMsg.setReceivers(set);
+        //封装respond
         response.setResponseMsg(responseMsg);
         return response;
     }
