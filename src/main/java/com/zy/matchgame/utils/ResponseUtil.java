@@ -35,5 +35,25 @@ public class ResponseUtil {
         return response;
     }
 
+    /**
+     * 封装响应多个用户的信息的方法
+     * @param receivers
+     * @return
+     */
+    public Response<String> response_Success(Set<String> receivers) {
+        Response response = new Response();
+        ResponseMsg<String> responseMsg = new ResponseMsg<>();
+        //设置respond里面的响应码和描述
+        response.setCode(MessageCode.SUCCESS.getCode().toString());
+        response.setDesc(MessageCode.SUCCESS.getDesc());
+        //设置respondMsg里面的消息类型为系统信息
+        responseMsg.setType(MessageTypeEnum.SYSTEM);
+        //设置respondMsg里面的发送者为NULL
+        responseMsg.setSender("NULL");
+        //设置respondMsg里面的接收者为该用户列表
+        responseMsg.setReceivers(receivers);
+        response.setResponseMsg(responseMsg);
+        return response;
+    }
 
 }
