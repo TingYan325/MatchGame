@@ -1,8 +1,12 @@
 package com.zy.matchgame.websocket;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.zy.matchgame.config.GetHttpSessionConfig;
+import com.zy.matchgame.domain.LogicImpl;
 import com.zy.matchgame.entity.Response;
+import com.zy.matchgame.entity.ResponseMsg;
+import com.zy.matchgame.enums.MessageTypeEnum;
 import com.zy.matchgame.utils.MatchUtil;
 import com.zy.matchgame.utils.ResponseUtil;
 import jakarta.servlet.http.HttpSession;
@@ -26,6 +30,9 @@ public class MatchEndPoint {
 
     @Autowired
     private ResponseUtil responseUtil;
+
+    @Autowired
+    private LogicImpl logicImpl;
 
     /**
      * 建立websocket连接成功，将session和用户名保存
@@ -57,9 +64,21 @@ public class MatchEndPoint {
         log.info("ChatWebsocket sendMessageAll 消息群发结束");
     }
 
+    /**
+     * 根据客户端传来的json字符串来判断消息类型，以此来实现对应的业务逻辑
+     * @param message
+     */
     @OnMessage
     public void onMessage(String message) {
+        JSONObject jsonObject = JSON.parseObject(message);
+        MessageTypeEnum type = jsonObject.getObject("type", MessageTypeEnum.class);
 
+        switch (type) {
+            case ADD_USER -> logicImpl.addUser(jsonObject);
+            case PLAY_GAME -> logicImpl.playGame(jsonObject);
+            case MATCH_USER -> logicImpl.matchUser(jsonObject);
+            case GAME_OVER -> logicImpl.gameOver(jsonObject);
+        }
     }
 
     /**
@@ -70,5 +89,4 @@ public class MatchEndPoint {
     public void onClose(Session session) {
         matchUtil.removeUser((String) httpSession.getAttribute("userName"));
     }
-
 }
