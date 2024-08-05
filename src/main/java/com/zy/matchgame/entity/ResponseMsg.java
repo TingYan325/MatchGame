@@ -1,17 +1,31 @@
 package com.zy.matchgame.entity;
 
+import com.zy.matchgame.enums.MessageTypeEnum;
+import lombok.Data;
+
+import java.awt.*;
+import java.util.Set;
+
 /**
  * @title 消息响应实体类
  */
-public class ResponseMsg extends Response {
+@Data
+public class ResponseMsg<T> {
 
-	private String msg;
+	/**
+	 * 消息类型
+	 */
+	private MessageTypeEnum type;
+	/**
+	 * 消息发送者
+	 */
+	private String sender;
+	/**
+	 * 消息接收者
+	 */
+	private Set<String> receivers;
 
-	public String getMsg() {
-		return msg;
-	}
+	private T data;
 
-	public void setMsg(String msg) {
-		this.msg = msg;
-	}
+
 }

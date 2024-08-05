@@ -1,17 +1,16 @@
 package com.zy.matchgame.entity;
 
+import lombok.Data;
+
 /**
  - @title 响应实体父类
  */
-public class Response {
+@Data
+public class Response<T> {
 	
 	private String code;
 
-	public String getCode() {
-		return code;
-	}
+	private String desc;
 
-	public void setCode(String code) {
-		this.code = code;
-	}
+	private ResponseMsg<T> responseMsg;
 }
