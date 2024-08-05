@@ -1,6 +1,5 @@
 package com.zy.matchgame.utils;
 
-import com.zy.matchgame.websocket.MatchEndPoint;
 import jakarta.websocket.Session;
 import org.springframework.stereotype.Component;
 
@@ -31,5 +30,13 @@ public class MatchUtil {
      */
     public void addUser(String username, Session session) {
         onlineUser.put(username, session);
+    }
+
+    /**
+     * 用户下线，删除用户对应的session
+     * @param userName
+     */
+    public void removeUser(String userName) {
+        onlineUser.remove(userName);
     }
 }
