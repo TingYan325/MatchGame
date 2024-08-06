@@ -32,6 +32,18 @@ public class MatchUtil {
         return onlineUser.get(receiver);
     }
 
+    /**
+     * 获取用户在线状态的方法
+     * @param username
+     * @return
+     */
+    public StatusEnum getOnlineStatus(String username) {
+        Object status = redisTemplate.opsForHash().get(EnumRedisKey.USER_STATUS.getKey(), username);
+        if (status == null) {
+            return null;
+        }
+        return StatusEnum.getStatusEnum(status.toString());
+    }
 
     /**
      * 添加用户方法
