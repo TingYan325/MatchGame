@@ -6,6 +6,8 @@ import com.zy.matchgame.config.GetHttpSessionConfig;
 import com.zy.matchgame.domain.LogicImpl;
 import com.zy.matchgame.entity.Response;
 import com.zy.matchgame.enums.MessageTypeEnum;
+import com.zy.matchgame.error.GameServerError;
+import com.zy.matchgame.exception.GameServerException;
 import com.zy.matchgame.utils.MatchUtil;
 import com.zy.matchgame.utils.ResponseUtil;
 import jakarta.servlet.http.HttpSession;
@@ -59,7 +61,6 @@ public class MatchEndPoint {
         for (String receiver : receivers) {
             MatchUtil.getOnlineUser(receiver).getAsyncRemote().sendText(JSON.toJSONString(responseBody));
         }
-
         log.info("ChatWebsocket sendMessageAll 消息群发结束");
     }
 
@@ -77,6 +78,7 @@ public class MatchEndPoint {
             case PLAY_GAME -> logicImpl.playGame(jsonObject);
             case MATCH_USER -> logicImpl.matchUser(jsonObject);
             case GAME_OVER -> logicImpl.gameOver(jsonObject);
+            default -> throw new GameServerException(GameServerError.WEBSOCKET_ADD_USER_FAILED);
         }
     }
 
@@ -87,5 +89,6 @@ public class MatchEndPoint {
     @OnClose
     public void onClose(Session session) {
         matchUtil.removeUser((String) httpSession.getAttribute("userName"));
+        matchUtil.removeUserOnlineStatus((String) httpSession.getAttribute("userName"));
     }
 }
