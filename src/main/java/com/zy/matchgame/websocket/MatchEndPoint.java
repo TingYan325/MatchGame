@@ -126,6 +126,10 @@ public class MatchEndPoint {
         log.info("ChatWebsocket addUser 用户加入游戏结束 message: {}", jsonObject.toJSONString());
     }
 
+    /**
+     * 匹配用户方法
+     * @param jsonObject
+     */
     @SneakyThrows
     public void matchUser(JSONObject jsonObject) {
         String username = jsonObject.getString("username");
@@ -208,6 +212,7 @@ public class MatchEndPoint {
     }
 
     public void playGame(JSONObject jsonObject) {
+
     }
 
     public void gameOver(JSONObject jsonObject) {

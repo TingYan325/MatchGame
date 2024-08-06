@@ -15,7 +15,6 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
       logic-delete-field: del_flag
-
 springdoc:
   api-docs:
     enabled: true
