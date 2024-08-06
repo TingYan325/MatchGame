@@ -2,7 +2,7 @@ package com.zy.matchgame.websocket;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.zy.matchgame.config.GetHttpSessionConfig;
+import com.zy.matchgame.config.WebSocketConfig;
 import com.zy.matchgame.entity.GameMatchInfo;
 import com.zy.matchgame.entity.Question;
 import com.zy.matchgame.entity.Response;
@@ -19,9 +19,12 @@ import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.mybatis.logging.Logger;
+import org.mybatis.logging.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.net.http.WebSocket;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Condition;
@@ -31,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.zy.matchgame.constant.CommonField.MATCH_TASK_NAME_PREFIX;
 
 @Slf4j
-@ServerEndpoint(value = "/match", configurator = GetHttpSessionConfig.class)
+@ServerEndpoint(value = "/websocket",configurator = WebSocketConfig.class)
 @Component
 public class MatchEndPoint {
 
