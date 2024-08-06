@@ -52,7 +52,7 @@ public class MatchEndPoint {
      * 根据响应消息中的接收者集合来给相应的客户端响应消息
      * @param responseBody
      */
-    private void sendToUser(Response<?> responseBody) {
+    public void sendToUser(Response<?> responseBody) {
         log.info("ChatWebsocket sendMessageAll 消息群发开始");
 
         Set<String> receivers = responseBody.getResponseMsg().getReceivers();
