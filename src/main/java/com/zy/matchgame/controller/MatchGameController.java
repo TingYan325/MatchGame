@@ -1,11 +1,13 @@
 package com.zy.matchgame.controller;
 
 import com.zy.matchgame.entity.Response;
+import com.zy.matchgame.enums.User;
 import com.zy.matchgame.utils.ResponseUtil;
 import jakarta.servlet.http.HttpSession;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/matching")
@@ -21,7 +23,7 @@ public class MatchGameController {
 
     @PostMapping("/login")
     public Response<?> login(@RequestBody User user, HttpSession httpSession) {
-        if(user.getUsername() != null && user.getPassword() == "123") {
+        if(user.getUsername() != null && Objects.equals(user.getPassword(), "123")) {
             httpSession.setAttribute("username", user.getUsername());
             return responseUtil.response_Success(user.getUsername());
         } else {

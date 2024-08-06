@@ -26,4 +26,8 @@ public enum MessageTypeEnum {
      * 游戏结束
      */
     GAME_OVER,
+    /**
+     * 取消匹配
+     */
+    CANCEL_MATCH,
 }
