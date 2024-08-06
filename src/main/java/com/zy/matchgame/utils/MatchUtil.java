@@ -61,4 +61,21 @@ public class MatchUtil {
     public void removeUser(String userName) {
         onlineUser.remove(userName);
     }
+
+    /**
+     * 移除用户在线状态
+      * @param userId
+     */
+    public void removeUserOnlineStatus(String userId) {
+        redisTemplate.opsForHash().delete(EnumRedisKey.USER_STATUS.getKey(), userId);
+    }
+
+    /**
+     * 修改用户在线状态为IDLE
+     * @param username
+     */
+    public void setOnlineStatus_IDLE(String username) {
+        removeUserOnlineStatus(username);
+        redisTemplate.opsForHash().put(EnumRedisKey.USER_STATUS.getKey(), username, StatusEnum.IDLE.getValue());
+    }
 }
