@@ -1,9 +1,5 @@
 package com.zy.matchgame.error;
 
-/**
- * @author yeeq
- * @date 2021/2/27
- */
 public enum GameServerError implements IServerError {
 
     /**

@@ -2,10 +2,6 @@ package com.zy.matchgame.exception;
 
 import com.zy.matchgame.error.GameServerError;
 
-/**
- * @author yeeq
- * @date 2021/5/2
- */
 public class GameServerException extends RuntimeException {
 
     private Integer code;

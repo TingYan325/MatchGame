@@ -2,9 +2,6 @@ package com.zy.matchgame.error;
 
 /**
  * <p>错误码定义的统一接口，用于统一管理服务中出现的错误码定义</p>
- *
- * @author yeeq
- * @date 2021/2/27
  */
 public interface IServerError {
 
