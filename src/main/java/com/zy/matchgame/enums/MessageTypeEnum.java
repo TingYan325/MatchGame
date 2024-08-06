@@ -19,10 +19,6 @@ public enum MessageTypeEnum {
      */
     MATCH_USER,
     /**
-     * 取消匹配
-     */
-    CANCEL_MATCH,
-    /**
      * 游戏开始
      */
     PLAY_GAME,
