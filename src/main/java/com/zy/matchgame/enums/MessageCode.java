@@ -8,6 +8,7 @@ public enum MessageCode {
     /**
      * 响应码
      */
+    PASSWORD_ERROR(4001, "密码错误"),
     SUCCESS(2000, "连接成功"),
     USER_IS_ONLINE(2001, "用户已存在"),
     CURRENT_USER_IS_INGAME(2002, "当前用户已在游戏中"),
