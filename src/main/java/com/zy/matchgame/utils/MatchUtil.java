@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -43,6 +44,15 @@ public class MatchUtil {
             return null;
         }
         return StatusEnum.getStatusEnum(status.toString());
+    }
+
+    /**
+     * 设置用户为 IN_GAME 状态
+     * @param userId
+     */
+    public void setUserInGame(String userId) {
+        removeUserOnlineStatus(userId);
+        redisTemplate.opsForHash().put(EnumRedisKey.USER_STATUS.getKey(), userId, StatusEnum.IN_GAME.getValue());
     }
 
     /**
@@ -85,5 +95,32 @@ public class MatchUtil {
     public void setOnlineStatus_InMatch(String userId) {
         removeUserOnlineStatus(userId);
         redisTemplate.opsForHash().put(EnumRedisKey.USER_STATUS.getKey(), userId, StatusEnum.IN_MATCH.getValue());
+    }
+
+    /**
+     * 设置处于游戏中的用户的对战信息
+     */
+    public void setUserMatchInfo(String userId, String userMatchInfo) {
+        redisTemplate.opsForHash().put(EnumRedisKey.USER_MATCH_INFO.getKey(), userId, userMatchInfo);
+    }
+
+    /**
+     * 设置处于游戏中的用户在同一房间
+     * @param userId1
+     * @param userId2
+     */
+    public void setUserInRoom(String userId1, String userId2) {
+        redisTemplate.opsForHash().put(EnumRedisKey.ROOM.getKey(), userId1, userId2);
+        redisTemplate.opsForHash().put(EnumRedisKey.ROOM.getKey(), userId2, userId1);
+    }
+
+    /**
+     * 随机获取处于匹配状态的用户
+     */
+    public String getUserInMatchRandom(String userId) {
+        Optional<Map.Entry<Object, Object>> any = redisTemplate.opsForHash().entries(EnumRedisKey.USER_STATUS.getKey())
+                .entrySet().stream().filter(entry -> entry.getValue().equals(StatusEnum.IN_MATCH.getValue()) && !entry.getKey().equals(userId))
+                .findAny();
+        return any.map(entry -> entry.getKey().toString()).orElse(null);
     }
 }
