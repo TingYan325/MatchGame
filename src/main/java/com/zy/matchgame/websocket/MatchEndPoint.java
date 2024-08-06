@@ -3,21 +3,32 @@ package com.zy.matchgame.websocket;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.zy.matchgame.config.GetHttpSessionConfig;
-import com.zy.matchgame.domain.LogicImpl;
+import com.zy.matchgame.entity.GameMatchInfo;
+import com.zy.matchgame.entity.Question;
 import com.zy.matchgame.entity.Response;
+import com.zy.matchgame.entity.UserMatchInfo;
 import com.zy.matchgame.enums.MessageTypeEnum;
+import com.zy.matchgame.enums.StatusEnum;
 import com.zy.matchgame.error.GameServerError;
 import com.zy.matchgame.exception.GameServerException;
+import com.zy.matchgame.service.impl.QuestionServiceImpl;
 import com.zy.matchgame.utils.MatchUtil;
 import com.zy.matchgame.utils.ResponseUtil;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static com.zy.matchgame.constant.CommonField.MATCH_TASK_NAME_PREFIX;
 
 @Slf4j
 @ServerEndpoint(value = "/match", configurator = GetHttpSessionConfig.class)
@@ -32,8 +43,11 @@ public class MatchEndPoint {
     @Autowired
     private ResponseUtil responseUtil;
 
-    @Autowired
-    private LogicImpl logicImpl;
+    QuestionServiceImpl questionService;
+
+    static Lock lock = new ReentrantLock();
+
+    static Condition matchCond = lock.newCondition();
 
     /**
      * 建立websocket连接成功，将session和用户名保存
@@ -74,10 +88,10 @@ public class MatchEndPoint {
         MessageTypeEnum type = jsonObject.getObject("type", MessageTypeEnum.class);
 
         switch (type) {
-            case ADD_USER -> logicImpl.addUser(jsonObject);
-            case PLAY_GAME -> logicImpl.playGame(jsonObject);
-            case MATCH_USER -> logicImpl.matchUser(jsonObject);
-            case GAME_OVER -> logicImpl.gameOver(jsonObject);
+            case ADD_USER -> addUser(jsonObject);
+            case PLAY_GAME -> playGame(jsonObject);
+            case MATCH_USER -> matchUser(jsonObject);
+            case GAME_OVER -> gameOver(jsonObject);
             default -> throw new GameServerException(GameServerError.WEBSOCKET_ADD_USER_FAILED);
         }
     }
@@ -90,5 +104,115 @@ public class MatchEndPoint {
     public void onClose(Session session) {
         matchUtil.removeUser((String) httpSession.getAttribute("userName"));
         matchUtil.removeUserOnlineStatus((String) httpSession.getAttribute("userName"));
+    }
+
+    public void addUser(JSONObject jsonObject) {
+        log.info("ChatWebsocket addUser 用户加入游戏开始 message: {}", jsonObject.toJSONString());
+
+        String username = jsonObject.getString("username");
+        StatusEnum statusEnum = matchUtil.getOnlineStatus(username);
+        Response<?> response = responseUtil.response_AddUser(username);
+
+        if(statusEnum != null) {
+            if(statusEnum.compareTo(StatusEnum.GAME_OVER) == 0) {
+                matchUtil.setOnlineStatus_IDLE(username);
+            }
+        } else {
+            matchUtil.setOnlineStatus_IDLE(username);
+        }
+
+        sendToUser(response);
+
+        log.info("ChatWebsocket addUser 用户加入游戏结束 message: {}", jsonObject.toJSONString());
+    }
+
+    @SneakyThrows
+    public void matchUser(JSONObject jsonObject) {
+        String username = jsonObject.getString("username");
+
+        lock.lock();
+
+        try{
+            matchUtil.setOnlineStatus_InMatch(username);
+            matchCond.signal();
+        } finally {
+            lock.unlock();
+        }
+
+        Thread matchThread = new Thread(() -> {
+            boolean flag = true;
+            String receiver = null;
+            while (flag) {
+                // 获取除自己以外的其他待匹配用户
+                lock.lock();
+                try {
+                    // 当前用户不处于待匹配状态
+                    if (matchUtil.getOnlineStatus(username).compareTo(StatusEnum.IN_GAME) == 0
+                            || matchUtil.getOnlineStatus(username).compareTo(StatusEnum.GAME_OVER) == 0) {
+                        log.info("ChatWebsocket matchUser 当前用户 {} 已退出匹配", username);
+                        return;
+                    }
+                    // 当前用户取消匹配状态
+                    if (matchUtil.getOnlineStatus(username).compareTo(StatusEnum.IDLE) == 0) {
+                        // 当前用户取消匹配
+                        log.info("ChatWebsocket matchUser 当前用户 {} 已退出匹配", username);
+                        sendToUser(responseUtil.response_matchUserFail(username));
+                        return;
+                    }
+                    receiver = matchUtil.getUserInMatchRandom(username);
+                    if (receiver != null) {
+                        // 对手不处于待匹配状态
+                        if (matchUtil.getOnlineStatus(receiver).compareTo(StatusEnum.IN_MATCH) != 0) {
+                            log.info("ChatWebsocket matchUser 当前用户 {}, 匹配对手 {} 已退出匹配状态", username, receiver);
+                        } else {
+                            matchUtil.setUserInGame(username);
+                            matchUtil.setUserInGame(receiver);
+                            matchUtil.setUserInRoom(username, receiver);
+                            flag = false;
+                        }
+                    } else {
+                        // 如果当前没有待匹配用户，进入等待队列
+                        try {
+                            log.info("ChatWebsocket matchUser 当前用户 {} 无对手可匹配", username);
+                            matchCond.await();
+                        } catch (InterruptedException e) {
+                            log.error("ChatWebsocket matchUser 匹配线程 {} 发生异常: {}",
+                                    Thread.currentThread().getName(), e.getMessage());
+                        }
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            //设置初始比赛用户信息
+            UserMatchInfo senderInfo = new UserMatchInfo();
+            UserMatchInfo receiverInfo = new UserMatchInfo();
+            senderInfo.setUserId(username);
+            senderInfo.setScore(0);
+            receiverInfo.setUserId(receiver);
+            receiverInfo.setScore(0);
+            //存储用户比赛信息
+            matchUtil.setUserMatchInfo(username, JSON.toJSONString(senderInfo));
+            matchUtil.setUserMatchInfo(receiver, JSON.toJSONString(receiverInfo));
+            //设置初始比赛信息
+            GameMatchInfo gameMatchInfo = new GameMatchInfo();
+            List<Question> questions = questionService.getAllQuestion();
+            gameMatchInfo.setQuestions(questions);
+            gameMatchInfo.setSelfInfo(senderInfo);
+            gameMatchInfo.setOpponentInfo(receiverInfo);
+
+        }, MATCH_TASK_NAME_PREFIX + username);
+        matchThread.start();
+    }
+
+
+
+    public void playGame(JSONObject jsonObject) {
+    }
+
+
+
+    public void gameOver(JSONObject jsonObject) {
     }
 }
