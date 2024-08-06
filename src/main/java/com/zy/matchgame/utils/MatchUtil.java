@@ -78,4 +78,12 @@ public class MatchUtil {
         removeUserOnlineStatus(username);
         redisTemplate.opsForHash().put(EnumRedisKey.USER_STATUS.getKey(), username, StatusEnum.IDLE.getValue());
     }
+
+    /**
+     * 设置用户为 IN_MATCH 状态
+     */
+    public void setOnlineStatus_InMatch(String userId) {
+        removeUserOnlineStatus(userId);
+        redisTemplate.opsForHash().put(EnumRedisKey.USER_STATUS.getKey(), userId, StatusEnum.IN_MATCH.getValue());
+    }
 }
