@@ -1,7 +1,9 @@
 package com.zy.matchgame.utils;
 
+import com.zy.matchgame.entity.GameMatchInfo;
 import com.zy.matchgame.entity.Response;
 import com.zy.matchgame.entity.ResponseMsg;
+import com.zy.matchgame.entity.UserMatchInfo;
 import com.zy.matchgame.enums.MessageCode;
 import com.zy.matchgame.enums.MessageTypeEnum;
 import com.zy.matchgame.enums.StatusEnum;
@@ -118,6 +120,47 @@ public class ResponseUtil {
             response.setDesc(MessageCode.SUCCESS.getDesc());
         }
         response.setResponseMsg(responseMsg);
+
+        return response;
+    }
+
+    /**
+     * 匹配用户成功的返回消息
+     * @param senderInfo
+     * @param receiverInfo
+     * @return
+     */
+    public Response<GameMatchInfo> response_matchUser(UserMatchInfo senderInfo, UserMatchInfo receiverInfo) {
+        Response<GameMatchInfo> response = new Response<>();
+        ResponseMsg<GameMatchInfo> responseMsg = new ResponseMsg<>();
+
+        responseMsg.setType(MessageTypeEnum.MATCH_USER);
+        responseMsg.setSender("NULL");
+
+        response.setCode(MessageCode.SUCCESS.getCode());
+        response.setDesc(MessageCode.SUCCESS.getDesc());
+
+        return response;
+    }
+
+
+    /**
+     * 返回用户取消匹配的消息实体类
+     * @param userName
+     * @return
+     */
+    public Response<GameMatchInfo> response_matchUserFail(String userName) {
+        Response<GameMatchInfo> response = new Response<>();
+        ResponseMsg<GameMatchInfo> result = new ResponseMsg<>();
+        result.setSender("NULL");
+
+        response.setCode(MessageCode.CANCEL_MATCH_ERROR.getCode());
+        response.setDesc(MessageCode.CANCEL_MATCH_ERROR.getDesc());
+        Set<String> set = new HashSet<>();
+        set.add(userName);
+        result.setReceivers(set);
+        result.setType(MessageTypeEnum.CANCEL_MATCH);
+        response.setResponseMsg(result);
 
         return response;
     }
