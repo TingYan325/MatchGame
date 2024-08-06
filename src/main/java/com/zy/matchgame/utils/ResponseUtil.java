@@ -1,16 +1,15 @@
 package com.zy.matchgame.utils;
 
-import com.zy.matchgame.entity.GameMatchInfo;
-import com.zy.matchgame.entity.Response;
-import com.zy.matchgame.entity.ResponseMsg;
-import com.zy.matchgame.entity.UserMatchInfo;
+import com.zy.matchgame.entity.*;
 import com.zy.matchgame.enums.MessageCode;
 import com.zy.matchgame.enums.MessageTypeEnum;
 import com.zy.matchgame.enums.StatusEnum;
+import com.zy.matchgame.service.impl.QuestionServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -18,6 +17,9 @@ public class ResponseUtil {
 
     @Autowired
     MatchUtil matchUtil;
+
+    @Autowired
+    QuestionServiceImpl questionService;
 
     /**
      * 系统信息回复成功
@@ -131,14 +133,29 @@ public class ResponseUtil {
      * @return
      */
     public Response<GameMatchInfo> response_matchUser(UserMatchInfo senderInfo, UserMatchInfo receiverInfo) {
+        //创建初始对象
         Response<GameMatchInfo> response = new Response<>();
         ResponseMsg<GameMatchInfo> responseMsg = new ResponseMsg<>();
-
+        //设置信息类型，和信息发送者
         responseMsg.setType(MessageTypeEnum.MATCH_USER);
         responseMsg.setSender("NULL");
-
+        //设置信息响应码和信息描述
         response.setCode(MessageCode.SUCCESS.getCode());
         response.setDesc(MessageCode.SUCCESS.getDesc());
+        //封装比赛基本信息，本人信息，对手信息，题目
+        GameMatchInfo gameMatchInfo = new GameMatchInfo();
+        gameMatchInfo.setSelfInfo(senderInfo);
+        gameMatchInfo.setOpponentInfo(receiverInfo);
+        List<Question> questions = questionService.getAllQuestion();
+        gameMatchInfo.setQuestions(questions);
+
+        responseMsg.setData(gameMatchInfo);
+        //封装接收者
+        Set<String> set = new HashSet<>();
+        set.add(receiverInfo.getUserId());
+        responseMsg.setReceivers(set);
+
+        response.setResponseMsg(responseMsg);
 
         return response;
     }
