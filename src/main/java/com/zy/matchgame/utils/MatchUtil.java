@@ -1,6 +1,10 @@
 package com.zy.matchgame.utils;
 
+import com.zy.matchgame.enums.EnumRedisKey;
+import com.zy.matchgame.enums.StatusEnum;
+import jakarta.annotation.Resource;
 import jakarta.websocket.Session;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -13,7 +17,11 @@ public class MatchUtil {
      */
     private static final Map<String, Session> onlineUser = new ConcurrentHashMap<>();
 
-
+    /**
+     * key 是标识存储用户在线状态的 EnumRedisKey，value 为 map 类型，其中用户 userId 为 key，用户在线状态 为 value
+     */
+    @Resource
+    private RedisTemplate<String, Map<String, String>> redisTemplate;
 
     /**
      * 获取在线用户的session
