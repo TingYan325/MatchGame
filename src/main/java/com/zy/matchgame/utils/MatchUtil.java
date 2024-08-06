@@ -13,8 +13,10 @@ public class MatchUtil {
      */
     private static final Map<String, Session> onlineUser = new ConcurrentHashMap<>();
 
+
+
     /**
-     * 获取接受用户的session
+     * 获取在线用户的session
      * @param receiver
      * @return
      */

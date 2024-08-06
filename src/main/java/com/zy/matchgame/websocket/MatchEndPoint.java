@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.zy.matchgame.config.GetHttpSessionConfig;
 import com.zy.matchgame.domain.LogicImpl;
 import com.zy.matchgame.entity.Response;
-import com.zy.matchgame.entity.ResponseMsg;
 import com.zy.matchgame.enums.MessageTypeEnum;
 import com.zy.matchgame.utils.MatchUtil;
 import com.zy.matchgame.utils.ResponseUtil;
