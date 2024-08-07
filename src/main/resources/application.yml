@@ -8,6 +8,10 @@ spring:
     password: 1234
     username: root
     url: jdbc:mysql://localhost:3306/match_game
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6739
 mybatis-plus:
   global-config:
     db-config:

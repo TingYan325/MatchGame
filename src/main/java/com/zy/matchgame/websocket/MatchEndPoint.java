@@ -2,6 +2,7 @@ package com.zy.matchgame.websocket;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.zy.matchgame.config.GetHttpSessionConfig;
 import com.zy.matchgame.config.WebSocketConfig;
 import com.zy.matchgame.entity.GameMatchInfo;
 import com.zy.matchgame.entity.Response;
@@ -21,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -30,14 +30,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.zy.matchgame.constant.CommonField.MATCH_TASK_NAME_PREFIX;
 
 @Slf4j
-@ServerEndpoint(value = "/websocket",configurator = WebSocketConfig.class)
+@ServerEndpoint(value = "/websocket",configurator = GetHttpSessionConfig.class)
 @Component
 public class MatchEndPoint {
+    private String userId;
 
     private HttpSession httpSession;
 
-    @Autowired
-    private MatchUtil matchUtil;
+    static MatchUtil matchUtil;
 
     @Autowired
     private ResponseUtil responseUtil;
@@ -47,6 +47,11 @@ public class MatchEndPoint {
     static Lock lock = new ReentrantLock();
 
     static Condition matchCond = lock.newCondition();
+
+    @Autowired
+    public void setMatchCacheUtil(MatchUtil matchUtil) {
+        MatchEndPoint.matchUtil = matchUtil;
+    }
 
     /**
      * 建立websocket连接成功，将session和用户名保存
@@ -58,9 +63,13 @@ public class MatchEndPoint {
     public void onOpen(Session session, EndpointConfig config) {
         //获取用户名,将用户名和session保存在MatchUtil里的map中
         this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
-        matchUtil.addUser((String) httpSession.getAttribute("userName"), session);
-        //返回系统成功信息
-        sendToUser(responseUtil.response_Success((String) httpSession.getAttribute("userName")));
+        matchUtil.addUser((String) httpSession.getAttribute("username"), session);
+        this.userId = (String) httpSession.getAttribute("username");
+    }
+
+    @OnError
+    public void onError(Session session, Throwable error) {
+        log.error("onError", error.getMessage());
     }
 
     /**
@@ -92,7 +101,10 @@ public class MatchEndPoint {
             case MATCH_USER -> matchUser(jsonObject);
             case GAME_OVER -> gameOver(jsonObject);
             case CANCEL_MATCH -> cancelGame(jsonObject);
-            default -> throw new GameServerException(GameServerError.WEBSOCKET_ADD_USER_FAILED);
+            default -> sendToUser(responseUtil.response_Success((String) httpSession.getAttribute("username")));
+            //default -> throw new GameServerException(GameServerError.WEBSOCKET_ADD_USER_FAILED);
+            //返回系统成功信息
+            //sendToUser(responseUtil.response_Success((String) httpSession.getAttribute("username")));
         }
     }
 
@@ -211,10 +223,34 @@ public class MatchEndPoint {
         matchThread.start();
     }
 
+
+    /**
+     * 游戏进行中执行信息更新的方法
+     * @param jsonObject
+     */
     public void playGame(JSONObject jsonObject) {
+        log.info("接收前端返回的答案，判断对错");
+        //从传过来的json数据中获得用户名和用户选择的答案
+        String username = jsonObject.getString("username");
+        JSONObject responseMsg = jsonObject.getJSONObject("ResponseMsg");
+        JSONObject data = responseMsg.getJSONObject("Data");
+        Integer answerId = Integer.valueOf((String) data.get("answerId"));
+        String answer = String.valueOf(data.get("answer"));
+        //通过判断答案，来决定加不加分
+        if(answer.compareTo(questionService.getAnswerById(answerId)) == 0) {
+            UserMatchInfo userMatchInfo = JSON.parseObject(matchUtil.getUserMatchInfo(username), UserMatchInfo.class);
+            userMatchInfo.setScore(userMatchInfo.getScore() + 1);
+            matchUtil.setUserMatchInfo(username, JSON.toJSONString(userMatchInfo));
+            sendToUser(responseUtil.response_InGameRight(username, userMatchInfo.getScore()));
+        } else {
+            UserMatchInfo userMatchInfo = JSON.parseObject(matchUtil.getUserMatchInfo(username), UserMatchInfo.class);
+            sendToUser(responseUtil.response_InGameFail(username, userMatchInfo.getScore()));
+        }
+        //判断完成
     }
 
     public void gameOver(JSONObject jsonObject) {
+
     }
 
     public void cancelGame(JSONObject jsonObject) {
