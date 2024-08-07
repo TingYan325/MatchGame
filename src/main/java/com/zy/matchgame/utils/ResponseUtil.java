@@ -181,4 +181,58 @@ public class ResponseUtil {
 
         return response;
     }
+
+    /**
+     * 答题正确后返回的消息的生成方法
+     * @param userName
+     * @param Score
+     * @return
+     */
+    public Response<UserMatchInfo> response_InGameRight(String userName, Integer Score) {
+        Response<UserMatchInfo> response = new Response<>();
+        ResponseMsg<UserMatchInfo> responseMsg = new ResponseMsg<>();
+        UserMatchInfo userMatchInfo = new UserMatchInfo();
+
+        responseMsg.setSender("NULL");
+        String receiver = matchUtil.getUserFromRoom(userName);
+        Set<String> set = new HashSet<>();
+        set.add(receiver);
+        set.add(userName);
+        responseMsg.setReceivers(set);
+
+        userMatchInfo.setUserId(userName);
+        userMatchInfo.setScore(Score + 1);
+
+        responseMsg.setData(userMatchInfo);
+
+        response.setCode(MessageCode.SUCCESS.getCode());
+        response.setDesc(MessageCode.SUCCESS.getDesc());
+        response.setResponseMsg(responseMsg);
+
+        return response;
+    }
+
+    public Response<UserMatchInfo> response_InGameFail(String username, Integer Score) {
+        Response<UserMatchInfo> response = new Response<>();
+        ResponseMsg<UserMatchInfo> responseMsg = new ResponseMsg<>();
+        UserMatchInfo userMatchInfo = new UserMatchInfo();
+
+        responseMsg.setSender("NULL");
+        String receiver = matchUtil.getUserFromRoom(username);
+        Set<String> set = new HashSet<>();
+        set.add(receiver);
+        set.add(username);
+        responseMsg.setReceivers(set);
+
+        userMatchInfo.setUserId(username);
+        userMatchInfo.setScore(Score);
+
+        responseMsg.setData(userMatchInfo);
+
+        response.setCode(MessageCode.SUCCESS.getCode());
+        response.setDesc(MessageCode.SUCCESS.getDesc());
+        response.setResponseMsg(responseMsg);
+
+        return response;
+    }
 }
