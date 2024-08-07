@@ -220,7 +220,6 @@ public class MatchEndPoint {
         matchThread.start();
     }
 
-
     /**
      * 游戏进行中执行信息更新的方法
      * @param message
