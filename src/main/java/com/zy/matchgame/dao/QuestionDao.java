@@ -1,5 +1,6 @@
 package com.zy.matchgame.dao;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.zy.matchgame.mapper.QuestionMapper;
 import com.zy.matchgame.entity.Question;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,5 +19,13 @@ public class QuestionDao {
      */
     public List<Question> getAllQuestion() {
         return mapper.selectList(null);
+    }
+
+    public String getAnswerById(Integer answerId) {
+        LambdaQueryWrapper<Question> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Question::getQuestionId, answerId)
+                .select(Question::getCorrect);
+
+        return this.mapper.selectOne(queryWrapper).getCorrect();
     }
 }
