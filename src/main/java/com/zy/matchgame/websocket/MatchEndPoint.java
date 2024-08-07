@@ -1,9 +1,8 @@
 package com.zy.matchgame.websocket;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.zy.matchgame.config.GetHttpSessionConfig;
-import com.zy.matchgame.config.WebSocketConfig;
+import com.zy.matchgame.entity.Answer;
 import com.zy.matchgame.entity.GameMatchInfo;
 import com.zy.matchgame.entity.Response;
 import com.zy.matchgame.entity.UserMatchInfo;
@@ -94,12 +93,12 @@ public class MatchEndPoint {
      */
     @OnMessage
     public void onMessage(String message) {
-        JSONObject jsonObject = JSON.parseObject(message);
-        MessageTypeEnum type = jsonObject.getObject("type", MessageTypeEnum.class);
+        Response<?> jsonObject = JSON.parseObject(message, Response.class);
+        MessageTypeEnum type = jsonObject.getResponseMsg().getType();
 
         switch (type) {
             case ADD_USER -> addUser(jsonObject);
-            case PLAY_GAME -> playGame(jsonObject);
+            case PLAY_GAME -> playGame(message);
             case MATCH_USER -> matchUser(jsonObject);
             case GAME_OVER -> gameOver(jsonObject);
             case CANCEL_MATCH -> cancelGame(jsonObject);
@@ -119,10 +118,9 @@ public class MatchEndPoint {
         matchUtil.removeUserOnlineStatus((String) httpSession.getAttribute("userName"));
     }
 
-    public void addUser(JSONObject jsonObject) {
-        log.info("ChatWebsocket addUser 用户加入游戏开始 message: {}", jsonObject.toJSONString());
+    public void addUser(Response jsonObject) {
 
-        String username = jsonObject.getString("username");
+        String username = jsonObject.getResponseMsg().getSender();
         StatusEnum statusEnum = matchUtil.getOnlineStatus(username);
         Response<?> response = responseUtil.response_AddUser(username);
 
@@ -135,8 +133,6 @@ public class MatchEndPoint {
         }
 
         sendToUser(response);
-
-        log.info("ChatWebsocket addUser 用户加入游戏结束 message: {}", jsonObject.toJSONString());
     }
 
     /**
@@ -144,8 +140,8 @@ public class MatchEndPoint {
      * @param jsonObject
      */
     @SneakyThrows
-    public void matchUser(JSONObject jsonObject) {
-        String username = jsonObject.getString("username");
+    public void matchUser(Response jsonObject) {
+        String username = jsonObject.getResponseMsg().getSender();
 
         lock.lock();
 
@@ -227,16 +223,16 @@ public class MatchEndPoint {
 
     /**
      * 游戏进行中执行信息更新的方法
-     * @param jsonObject
+     * @param message
      */
-    public void playGame(JSONObject jsonObject) {
+    public void playGame(String message) {
         log.info("接收前端返回的答案，判断对错");
         //从传过来的json数据中获得用户名和用户选择的答案
-        String username = jsonObject.getString("username");
-        JSONObject responseMsg = jsonObject.getJSONObject("ResponseMsg");
-        JSONObject data = responseMsg.getJSONObject("Data");
-        Integer answerId = Integer.valueOf((String) data.get("answerId"));
-        String answer = String.valueOf(data.get("answer"));
+        Response<Answer> jsonObject = JSON.parseObject(message, Response.class);
+        String username = jsonObject.getResponseMsg().getSender();
+
+        Integer answerId = jsonObject.getResponseMsg().getData().getAnswerId();
+        String answer = jsonObject.getResponseMsg().getData().getAnswer();
         //通过判断答案，来决定加不加分
         if(answer.compareTo(questionService.getAnswerById(answerId)) == 0) {
             UserMatchInfo userMatchInfo = JSON.parseObject(matchUtil.getUserMatchInfo(username), UserMatchInfo.class);
@@ -250,14 +246,14 @@ public class MatchEndPoint {
         //判断完成
     }
 
-    public void gameOver(JSONObject jsonObject) {
+    public void gameOver(Response<?> jsonObject) {
 
     }
 
-    public void cancelGame(JSONObject jsonObject) {
+    public void cancelGame(Response<?> jsonObject) {
         lock.lock();
         try {
-            matchUtil.setOnlineStatus_IDLE(jsonObject.getString("username"));
+            matchUtil.setOnlineStatus_IDLE(jsonObject.getResponseMsg().getSender());
         } finally {
             lock.unlock();
         }

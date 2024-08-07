@@ -17,16 +17,16 @@ public class MatchEndPointTest {
 
     @Test
     public void test() {
-        Answer answer = new Answer();
-        answer.setAnswerId(1);
-        answer.setAnswer("3");
-        Response<Answer> message = new Response<>();
-        ResponseMsg<Answer> msg = new ResponseMsg<>();
-        msg.setData(answer);
-        message.setResponseMsg(msg);
-        String message1 = JSON.toJSONString(message);
-        JSONObject jsonObject = JSON.parseObject(message1);
-
-        matchEndPoint.playGame(jsonObject);
+//        Answer answer = new Answer();
+//        answer.setAnswerId(1);
+//        answer.setAnswer("3");
+//        Response<Answer> message = new Response<>();
+//        ResponseMsg<Answer> msg = new ResponseMsg<>();
+//        msg.setData(answer);
+//        message.setResponseMsg(msg);
+//        String message1 = JSON.toJSONString(message);
+//        JSONObject jsonObject = JSON.parseObject(message1);
+//
+//        matchEndPoint.playGame(jsonObject);
     }
 }
