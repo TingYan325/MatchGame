@@ -39,14 +39,16 @@ public class MatchEndPoint {
 
     static MatchUtil matchUtil;
 
-    @Autowired
-    private ResponseUtil responseUtil;
+    static ResponseUtil responseUtil;
 
     QuestionServiceImpl questionService;
 
     static Lock lock = new ReentrantLock();
 
     static Condition matchCond = lock.newCondition();
+
+    @Autowired
+    public void ResponseUtil(ResponseUtil responseUtil) {MatchEndPoint.responseUtil = responseUtil;}
 
     @Autowired
     public void setMatchCacheUtil(MatchUtil matchUtil) {
@@ -101,8 +103,7 @@ public class MatchEndPoint {
             case MATCH_USER -> matchUser(jsonObject);
             case GAME_OVER -> gameOver(jsonObject);
             case CANCEL_MATCH -> cancelGame(jsonObject);
-            default -> sendToUser(responseUtil.response_Success((String) httpSession.getAttribute("username")));
-            //default -> throw new GameServerException(GameServerError.WEBSOCKET_ADD_USER_FAILED);
+            default -> throw new GameServerException(GameServerError.WEBSOCKET_ADD_USER_FAILED);
             //返回系统成功信息
             //sendToUser(responseUtil.response_Success((String) httpSession.getAttribute("username")));
         }
