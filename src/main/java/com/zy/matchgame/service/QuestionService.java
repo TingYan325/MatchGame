@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface QuestionService extends IService<Question> {
     List<Question> getAllQuestion();
+
+    String getAnswerById(Integer answerId);
 }

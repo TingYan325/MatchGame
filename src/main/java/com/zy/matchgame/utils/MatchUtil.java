@@ -123,4 +123,19 @@ public class MatchUtil {
                 .findAny();
         return any.map(entry -> entry.getKey().toString()).orElse(null);
     }
+
+    /**
+     * 从房间中获取用户
+     */
+    public String getUserFromRoom(String userId) {
+        return redisTemplate.opsForHash().get(EnumRedisKey.ROOM.getKey(), userId).toString();
+    }
+
+    /**
+     * 获取处于游戏中的用户的对战信息
+     */
+    public String getUserMatchInfo(String userId) {
+        return redisTemplate.opsForHash().get(EnumRedisKey.USER_MATCH_INFO.getKey(), userId).toString();
+    }
+
 }

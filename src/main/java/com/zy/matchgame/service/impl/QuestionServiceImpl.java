@@ -22,4 +22,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     public List<Question> getAllQuestion() {
         return questionDao.getAllQuestion();
     }
+
+    @Override
+    public String getAnswerById(Integer answerId) {
+        return questionDao.getAnswerById(answerId);
+    }
 }
