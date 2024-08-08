@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static com.zy.matchgame.utils.constant.CommonField.QUESTION_RANDOM_COUNT;
+
 @Repository
 public class QuestionDao {
 
@@ -18,7 +20,11 @@ public class QuestionDao {
      * 从数据库获取所有 question
      */
     public List<Question> getAllQuestion() {
-        return mapper.selectList(null);
+        Long start = mapper.selectCount(null) - QUESTION_RANDOM_COUNT;
+
+        LambdaQueryWrapper<Question> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.between(Question::getQuestionId, start, start+QUESTION_RANDOM_COUNT);
+        return mapper.selectList(queryWrapper);
     }
 
     public String getAnswerById(Integer answerId) {
