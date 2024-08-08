@@ -18,8 +18,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Question implements Serializable {
-
-    @TableId("question_id")
+    @TableId
     private Long questionId;
 /**
      * 题目内容

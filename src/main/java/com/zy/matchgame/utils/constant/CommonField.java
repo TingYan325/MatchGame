@@ -1,4 +1,4 @@
-package com.zy.matchgame.constant;
+package com.zy.matchgame.utils.constant;
 
 /**
  * 常量类

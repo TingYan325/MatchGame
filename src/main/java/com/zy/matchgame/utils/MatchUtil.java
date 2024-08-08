@@ -138,4 +138,22 @@ public class MatchUtil {
         return redisTemplate.opsForHash().get(EnumRedisKey.USER_MATCH_INFO.getKey(), userId).toString();
     }
 
+    public synchronized void setOnlineStatus_GAMEOVER(String sender) {
+        removeUserOnlineStatus(sender);
+        redisTemplate.opsForHash().put(EnumRedisKey.USER_STATUS.getKey(), sender, StatusEnum.GAME_OVER.getValue());
+    }
+
+    /**
+     * 移除处于游戏中的用户的对战信息
+     */
+    public void removeUserMatchInfo(String userId) {
+        redisTemplate.opsForHash().delete(EnumRedisKey.USER_MATCH_INFO.getKey(), userId);
+    }
+
+    /**
+     * 从房间中移除用户
+     */
+    public void removeUserFromRoom(String userId) {
+        redisTemplate.opsForHash().delete(EnumRedisKey.ROOM.getKey(), userId);
+    }
 }
