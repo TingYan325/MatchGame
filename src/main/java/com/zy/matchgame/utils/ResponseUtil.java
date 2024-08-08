@@ -177,6 +177,14 @@ public class ResponseUtil {
         return responseMsg;
     }
 
+    /**
+     * 封装ResponseMsg的方法
+     * @param receiver
+     * @param data
+     * @param messageTypeEnum
+     * @return
+     * @param <V>
+     */
     private <V> ResponseMsg<Object> setResponseMsg(Set<String> receiver, V data, MessageTypeEnum messageTypeEnum) {
         ResponseMsg<Object> responseMsg = new ResponseMsg<>();
 
@@ -187,6 +195,13 @@ public class ResponseUtil {
         return responseMsg;
     }
 
+    /**
+     * 封装Response的方法
+     * @param messageCode
+     * @param responseMsg
+     * @return
+     * @param <V>
+     */
     public <V> Response<V> setResponse(MessageCode messageCode, ResponseMsg<V> responseMsg) {
 
         Response<V> response = new Response<>();
@@ -195,5 +210,16 @@ public class ResponseUtil {
         response.setResponseMsg(responseMsg);
 
         return response;
+    }
+
+
+    /**
+     * 返回游戏结束的响应信息的方法
+     * @param userMatchInfo
+     * @return
+     */
+    public Response<Object> response_GameOver(UserMatchInfo userMatchInfo) {
+        ResponseMsg<Object> responseMsg = setResponseMsg(userMatchInfo.getUserId(), userMatchInfo, SYSTEM);
+        return setResponse(MessageCode.SUCCESS, responseMsg);
     }
 }
