@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.zy.matchgame.enums.MessageTypeEnum.*;
+
 @Component
 public class ResponseUtil {
 
@@ -26,23 +28,9 @@ public class ResponseUtil {
      * @param userName
      * @return
      */
-    public Response<String> response_Success(String userName) {
-        Response response = new Response();
-        ResponseMsg<String> responseMsg = new ResponseMsg<>();
-        //设置respond里面的响应码和描述
-        response.setCode(MessageCode.SUCCESS.getCode());
-        response.setDesc(MessageCode.SUCCESS.getDesc());
-        //设置respondMsg里面的消息类型为系统信息
-        responseMsg.setType(MessageTypeEnum.SYSTEM);
-        //设置respondMsg里面的发送者为NULL
-        responseMsg.setSender("NULL");
-        //设置respondMsg里面的接收者为该用户
-        Set<String> set = new HashSet<>();
-        set.add(userName);
-        responseMsg.setReceivers(set);
-        //封装respond
-        response.setResponseMsg(responseMsg);
-        return response;
+    public Response<Object> response_Success(String userName) {
+        ResponseMsg<Object> responseMsg = setResponseMsg(userName, null, SYSTEM);
+        return setResponse(MessageCode.SUCCESS, responseMsg);
     }
 
     /**
@@ -50,20 +38,9 @@ public class ResponseUtil {
      * @param receivers
      * @return
      */
-    public Response<String> response_Success(Set<String> receivers) {
-        Response response = new Response();
-        ResponseMsg<String> responseMsg = new ResponseMsg<>();
-        //设置respond里面的响应码和描述
-        response.setCode(MessageCode.SUCCESS.getCode());
-        response.setDesc(MessageCode.SUCCESS.getDesc());
-        //设置respondMsg里面的消息类型为系统信息
-        responseMsg.setType(MessageTypeEnum.SYSTEM);
-        //设置respondMsg里面的发送者为NULL
-        responseMsg.setSender("NULL");
-        //设置respondMsg里面的接收者为该用户列表
-        responseMsg.setReceivers(receivers);
-        response.setResponseMsg(responseMsg);
-        return response;
+    public Response<Object> response_Success(Set<String> receivers) {
+        ResponseMsg<Object> responseMsg = setResponseMsg(receivers, null, SYSTEM);
+        return setResponse(MessageCode.SUCCESS, responseMsg);
     }
 
     /**
@@ -71,22 +48,9 @@ public class ResponseUtil {
      * @param userName
      * @return
      */
-    public Response<String> response_Faild(String userName) {
-        Response response = new Response();
-        ResponseMsg<String> responseMsg = new ResponseMsg<>();
-        //设置respond里面的响应码和描述
-        response.setCode(MessageCode.PASSWORD_ERROR.getCode());
-        response.setDesc(MessageCode.PASSWORD_ERROR.getDesc());
-        //设置respondMsg里面的消息类型为系统信息
-        responseMsg.setType(MessageTypeEnum.SYSTEM);
-        //设置respondMsg里面的发送者为NULL
-        responseMsg.setSender("NULL");
-        //设置respondMsg里面的接收者为该用户
-        Set<String> set = new HashSet<>();
-        set.add(userName);
-        responseMsg.setReceivers(set);
-        response.setResponseMsg(responseMsg);
-        return response;
+    public Response<Object> response_Faild(String userName) {
+        ResponseMsg<Object> responseMsg = setResponseMsg(userName, null, SYSTEM);
+        return setResponse(MessageCode.PASSWORD_ERROR, responseMsg);
     }
 
 
@@ -98,66 +62,43 @@ public class ResponseUtil {
     public Response<Object> response_AddUser(String userName) {
         StatusEnum status = matchUtil.getOnlineStatus(userName);
 
+        ResponseMsg<Object> responseMsg = setResponseMsg(userName, null, ADD_USER);
         Response<Object> response = new Response<>();
-        ResponseMsg<Object> responseMsg = new ResponseMsg<>();
-        //设置接收人，消息类型和发送人为系统
-        responseMsg.setType(MessageTypeEnum.ADD_USER);
-        responseMsg.setSender("NULL");
-        Set<String> set = new HashSet<>();
-        set.add(userName);
-        responseMsg.setReceivers(set);
-
-        /**
-         * 根据用户状态不同返回不同类型的消息码和描述
+        /*
+          根据用户状态不同返回不同类型的消息码和描述
          */
         if(status != null) {
             if(status.compareTo(StatusEnum.GAME_OVER) == 0){
-                response.setCode(MessageCode.SUCCESS.getCode());
-                response.setDesc(MessageCode.SUCCESS.getDesc());
+                response = setResponse(MessageCode.SUCCESS, responseMsg);
             } else {
-                response.setCode(MessageCode.USER_IS_ONLINE.getCode());
-                response.setDesc(MessageCode.USER_IS_ONLINE.getDesc());
+                setResponse(MessageCode.USER_IS_ONLINE, responseMsg);
             }
-            response.setCode(MessageCode.SUCCESS.getCode());
-            response.setDesc(MessageCode.SUCCESS.getDesc());
+            setResponse(MessageCode.SUCCESS, responseMsg);
         }
-        response.setResponseMsg(responseMsg);
 
         return response;
     }
 
     /**
      * 匹配用户成功的返回消息
+     *
      * @param senderInfo
      * @param receiverInfo
      * @return
      */
-    public Response<GameMatchInfo> response_matchUser(UserMatchInfo senderInfo, UserMatchInfo receiverInfo) {
-        //创建初始对象
-        Response<GameMatchInfo> response = new Response<>();
-        ResponseMsg<GameMatchInfo> responseMsg = new ResponseMsg<>();
-        //设置信息类型，和信息发送者
-        responseMsg.setType(MessageTypeEnum.MATCH_USER);
-        responseMsg.setSender("NULL");
-        //设置信息响应码和信息描述
-        response.setCode(MessageCode.SUCCESS.getCode());
-        response.setDesc(MessageCode.SUCCESS.getDesc());
-        //封装比赛基本信息，本人信息，对手信息，题目
+    public Response<Object> response_matchUser(UserMatchInfo senderInfo, UserMatchInfo receiverInfo) {
+        /*
+           封装比赛基本信息，本人信息，对手信息，题目
+         */
         GameMatchInfo gameMatchInfo = new GameMatchInfo();
         gameMatchInfo.setSelfInfo(senderInfo);
         gameMatchInfo.setOpponentInfo(receiverInfo);
         List<Question> questions = questionService.getAllQuestion();
         gameMatchInfo.setQuestions(questions);
 
-        responseMsg.setData(gameMatchInfo);
-        //封装接收者
-        Set<String> set = new HashSet<>();
-        set.add(receiverInfo.getUserId());
-        responseMsg.setReceivers(set);
+        ResponseMsg<Object> responseMsg = setResponseMsg(receiverInfo.getUserId(), gameMatchInfo, MATCH_USER);
 
-        response.setResponseMsg(responseMsg);
-
-        return response;
+        return setResponse(MessageCode.SUCCESS, responseMsg);
     }
 
 
@@ -166,71 +107,91 @@ public class ResponseUtil {
      * @param userName
      * @return
      */
-    public Response<GameMatchInfo> response_matchUserFail(String userName) {
-        Response<GameMatchInfo> response = new Response<>();
-        ResponseMsg<GameMatchInfo> result = new ResponseMsg<>();
-        result.setSender("NULL");
-
-        response.setCode(MessageCode.CANCEL_MATCH_ERROR.getCode());
-        response.setDesc(MessageCode.CANCEL_MATCH_ERROR.getDesc());
-        Set<String> set = new HashSet<>();
-        set.add(userName);
-        result.setReceivers(set);
-        result.setType(MessageTypeEnum.CANCEL_MATCH);
-        response.setResponseMsg(result);
-
-        return response;
+    public Response<Object> response_matchUserFail(String userName) {
+        ResponseMsg<Object> responseMsg = setResponseMsg(userName, null, CANCEL_MATCH);
+        return setResponse(MessageCode.CANCEL_MATCH_ERROR, responseMsg);
     }
 
     /**
-     * 答题正确后返回的消息的生成方法
-     * @param userName
+     * 答题正确后返回的消息的生成方法，分数加1
+     * @param username
      * @param Score
      * @return
      */
-    public Response<UserMatchInfo> response_InGameRight(String userName, Integer Score) {
-        Response<UserMatchInfo> response = new Response<>();
-        ResponseMsg<UserMatchInfo> responseMsg = new ResponseMsg<>();
+    public Response<Object> response_InGameRight(String username, Integer Score) {
         UserMatchInfo userMatchInfo = new UserMatchInfo();
-
-        responseMsg.setSender("NULL");
-        String receiver = matchUtil.getUserFromRoom(userName);
-        Set<String> set = new HashSet<>();
-        set.add(receiver);
-        set.add(userName);
-        responseMsg.setReceivers(set);
-
-        userMatchInfo.setUserId(userName);
+        userMatchInfo.setUserId(username);
         userMatchInfo.setScore(Score + 1);
 
-        responseMsg.setData(userMatchInfo);
-
-        response.setCode(MessageCode.SUCCESS.getCode());
-        response.setDesc(MessageCode.SUCCESS.getDesc());
-        response.setResponseMsg(responseMsg);
-
-        return response;
-    }
-
-    public Response<UserMatchInfo> response_InGameFail(String username, Integer Score) {
-        Response<UserMatchInfo> response = new Response<>();
-        ResponseMsg<UserMatchInfo> responseMsg = new ResponseMsg<>();
-        UserMatchInfo userMatchInfo = new UserMatchInfo();
-
-        responseMsg.setSender("NULL");
         String receiver = matchUtil.getUserFromRoom(username);
+
         Set<String> set = new HashSet<>();
         set.add(receiver);
         set.add(username);
-        responseMsg.setReceivers(set);
 
+        ResponseMsg<Object> responseMsg = setResponseMsg(set, userMatchInfo, PLAY_GAME);
+
+        return setResponse(MessageCode.SUCCESS, responseMsg);
+    }
+
+    /**
+     * 返回游戏进行中选择错误答案的返回消息，分数无变化
+     * @param username
+     * @param Score
+     * @return
+     */
+    public Response<Object> response_InGameFail(String username, Integer Score) {
+        UserMatchInfo userMatchInfo = new UserMatchInfo();
         userMatchInfo.setUserId(username);
         userMatchInfo.setScore(Score);
 
-        responseMsg.setData(userMatchInfo);
+        String receiver = matchUtil.getUserFromRoom(username);
 
-        response.setCode(MessageCode.SUCCESS.getCode());
-        response.setDesc(MessageCode.SUCCESS.getDesc());
+        Set<String> set = new HashSet<>();
+        set.add(receiver);
+        set.add(username);
+
+        ResponseMsg<Object> responseMsg = setResponseMsg(set, userMatchInfo, PLAY_GAME);
+
+        return setResponse(MessageCode.SUCCESS, responseMsg);
+    }
+
+
+    /**
+     * 使用函数进行消息封装，提高代码复用
+     * @param receiver
+     * @param data
+     * @param messageTypeEnum
+     * @return
+     * @param <V>
+     */
+    private <V> ResponseMsg<Object> setResponseMsg(String receiver, V data, MessageTypeEnum messageTypeEnum) {
+        ResponseMsg<Object> responseMsg = new ResponseMsg<>();
+
+        responseMsg.setType(messageTypeEnum);
+        responseMsg.setData(data);
+        Set<String> set = new HashSet<>();
+        set.add(receiver);
+        responseMsg.setReceivers(set);
+
+        return responseMsg;
+    }
+
+    private <V> ResponseMsg<Object> setResponseMsg(Set<String> receiver, V data, MessageTypeEnum messageTypeEnum) {
+        ResponseMsg<Object> responseMsg = new ResponseMsg<>();
+
+        responseMsg.setType(messageTypeEnum);
+        responseMsg.setData(data);
+        responseMsg.setReceivers(receiver);
+
+        return responseMsg;
+    }
+
+    public <V> Response<V> setResponse(MessageCode messageCode, ResponseMsg<V> responseMsg) {
+
+        Response<V> response = new Response<>();
+        response.setCode(messageCode.getCode());
+        response.setDesc(messageCode.getDesc());
         response.setResponseMsg(responseMsg);
 
         return response;
