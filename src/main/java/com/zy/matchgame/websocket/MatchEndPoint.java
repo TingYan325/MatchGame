@@ -251,6 +251,8 @@ public class MatchEndPoint {
     }
 
     public void cancelGame(Response<?> jsonObject) {
+
+        log.info("当前用户{}取消匹配", jsonObject.getResponseMsg().getSender());
         lock.lock();
         try {
             matchUtil.setOnlineStatus_IDLE(jsonObject.getResponseMsg().getSender());

@@ -1,5 +1,6 @@
 package com.zy.matchgame.entity;
 
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class Question implements Serializable {
 
+    @TableId("question_id")
     private Long questionId;
 /**
      * 题目内容

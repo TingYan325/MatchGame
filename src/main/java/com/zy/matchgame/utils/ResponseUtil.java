@@ -121,6 +121,9 @@ public class ResponseUtil {
             response.setCode(MessageCode.SUCCESS.getCode());
             response.setDesc(MessageCode.SUCCESS.getDesc());
         }
+
+        response.setCode(MessageCode.SUCCESS.getCode());
+        response.setDesc(MessageCode.SUCCESS.getDesc());
         response.setResponseMsg(responseMsg);
 
         return response;
