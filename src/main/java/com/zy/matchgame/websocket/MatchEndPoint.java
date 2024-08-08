@@ -26,7 +26,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.zy.matchgame.constant.CommonField.MATCH_TASK_NAME_PREFIX;
+import static com.zy.matchgame.utils.constant.CommonField.MATCH_TASK_NAME_PREFIX;
 
 @Slf4j
 @ServerEndpoint(value = "/websocket",configurator = GetHttpSessionConfig.class)
@@ -68,6 +68,12 @@ public class MatchEndPoint {
         this.userId = (String) httpSession.getAttribute("username");
     }
 
+
+    /**
+     * 错误处理
+     * @param session
+     * @param error
+     */
     @OnError
     public void onError(Session session, Throwable error) {
         log.error("onError", error.getMessage());
@@ -118,6 +124,11 @@ public class MatchEndPoint {
         matchUtil.removeUserOnlineStatus((String) httpSession.getAttribute("userName"));
     }
 
+
+    /**
+     * 用户进入匹配大厅时或上一场比赛结束后还没有进入下一场比赛调用的方法
+     * @param jsonObject
+     */
     public void addUser(Response jsonObject) {
 
         String username = jsonObject.getResponseMsg().getSender();
@@ -209,7 +220,7 @@ public class MatchEndPoint {
             matchUtil.setUserMatchInfo(username, JSON.toJSONString(senderInfo));
             matchUtil.setUserMatchInfo(receiver, JSON.toJSONString(receiverInfo));
             //调用函数生成返回信息并发送
-            Response<GameMatchInfo> response = responseUtil.response_matchUser(senderInfo, receiverInfo);
+            Response<Object> response = responseUtil.response_matchUser(senderInfo, receiverInfo);
             sendToUser(response);
             response = responseUtil.response_matchUser(receiverInfo, senderInfo);
             sendToUser(response);
@@ -234,6 +245,7 @@ public class MatchEndPoint {
         String answer = jsonObject.getResponseMsg().getData().getAnswer();
         //通过判断答案，来决定加不加分
         if(answer.compareTo(questionService.getAnswerById(answerId)) == 0) {
+            //更新用户比赛信息
             UserMatchInfo userMatchInfo = JSON.parseObject(matchUtil.getUserMatchInfo(username), UserMatchInfo.class);
             userMatchInfo.setScore(userMatchInfo.getScore() + 1);
             matchUtil.setUserMatchInfo(username, JSON.toJSONString(userMatchInfo));
@@ -245,10 +257,45 @@ public class MatchEndPoint {
         //判断完成
     }
 
-    public void gameOver(Response<?> jsonObject) {
 
+    /**
+     * 用户结束游戏的逻辑实现
+     * @param jsonObject
+     */
+    public void gameOver(Response<?> jsonObject) {
+        log.info("用户{}对局结束“", jsonObject.getResponseMsg().getSender());
+
+        String username = jsonObject.getResponseMsg().getSender();
+
+        lock.lock();
+        try {
+            //将当前用户的在线状态设置为GAME OVER
+            matchUtil.setOnlineStatus_GAMEOVER(username);
+            //判断当前用户在缓存中的状态是否已经设置为GAME OVER
+            if(matchUtil.getOnlineStatus(username).compareTo(StatusEnum.GAME_OVER) == 0) {
+                //给当前用户发送比赛信息，并更新在线状态
+                String userMatchInfo = matchUtil.getUserMatchInfo(userId);
+                Response<Object> response = responseUtil.response_GameOver(JSON.parseObject(userMatchInfo, UserMatchInfo.class));
+                sendToUser(response);
+                //给对手发信息，比赛已经结束
+                String receiver = matchUtil.getUserInMatchRandom(username);
+                String receiverUserMatchInfo = matchUtil.getUserMatchInfo(receiver);
+                Response<Object> response2 = responseUtil.response_GameOver(JSON.parseObject(receiverUserMatchInfo, UserMatchInfo.class));
+                sendToUser(response2);
+
+                //更新Redis中存储的房间和用户对战信息
+                matchUtil.removeUserMatchInfo(userId);
+                matchUtil.removeUserFromRoom(userId);
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
+    /**
+     * 取消匹配的方法
+     * @param jsonObject
+     */
     public void cancelGame(Response<?> jsonObject) {
         lock.lock();
         try {
