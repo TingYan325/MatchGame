@@ -1,7 +1,6 @@
 package com.zy.matchgame.dao;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zy.matchgame.mapper.QuestionMapper;
 import com.zy.matchgame.entity.Question;
 import org.springframework.beans.factory.annotation.Autowired;
