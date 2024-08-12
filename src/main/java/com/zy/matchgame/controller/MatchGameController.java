@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/matching")
@@ -24,8 +25,9 @@ public class MatchGameController {
     @PostMapping("/login")
     public Response<?> login(@RequestBody User user, HttpSession httpSession) {
         if(user.getUsername() != null && Objects.equals(user.getPassword(), "123")) {
-            httpSession.setAttribute("username", user.getUsername());
-            return responseUtil.response_Success(user.getUsername());
+            String username = user.getUsername() + UUID.randomUUID();
+            httpSession.setAttribute("username", username);
+            return responseUtil.response_Success(username);
         } else {
             return responseUtil.response_Faild(user.getUsername());
         }

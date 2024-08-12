@@ -15,6 +15,7 @@ import com.zy.matchgame.utils.MatchUtil;
 import com.zy.matchgame.utils.ResponseUtil;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.zy.matchgame.utils.constant.CommonField.MATCH_TASK_NAME_PREFIX;
 
 @Slf4j
-@ServerEndpoint(value = "/websocket",configurator = GetHttpSessionConfig.class)
+@ServerEndpoint(value = "/websocket/{id}",configurator = GetHttpSessionConfig.class)
 @Component
 public class MatchEndPoint {
     private String userId;
@@ -61,11 +62,10 @@ public class MatchEndPoint {
      * @return
      */
     @OnOpen
-    public void onOpen(Session session, EndpointConfig config) {
+    public void onOpen(@PathParam("id") String id, Session session, EndpointConfig config) {
         //获取用户名,将用户名和session保存在MatchUtil里的map中
-        this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
-        matchUtil.addUser((String) httpSession.getAttribute("username"), session);
-        this.userId = (String) httpSession.getAttribute("username");
+        matchUtil.addUser(id, session);
+        this.userId = id;
     }
 
 
@@ -269,6 +269,7 @@ public class MatchEndPoint {
 
         lock.lock();
         try {
+
             //将当前用户的在线状态设置为GAME OVER
             matchUtil.setOnlineStatus_GAMEOVER(username);
             //判断当前用户在缓存中的状态是否已经设置为GAME OVER
