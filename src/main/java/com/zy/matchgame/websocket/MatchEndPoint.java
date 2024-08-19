@@ -3,7 +3,6 @@ package com.zy.matchgame.websocket;
 import com.alibaba.fastjson.JSON;
 import com.zy.matchgame.config.GetHttpSessionConfig;
 import com.zy.matchgame.entity.Answer;
-import com.zy.matchgame.entity.GameMatchInfo;
 import com.zy.matchgame.entity.Response;
 import com.zy.matchgame.entity.UserMatchInfo;
 import com.zy.matchgame.enums.MessageTypeEnum;
@@ -46,6 +45,7 @@ public class MatchEndPoint {
     static Lock lock = new ReentrantLock();
 
     static Condition matchCond = lock.newCondition();
+    private Session session;
 
     @Autowired
     public void ResponseUtil(ResponseUtil responseUtil) {MatchEndPoint.responseUtil = responseUtil;}
@@ -58,14 +58,18 @@ public class MatchEndPoint {
     /**
      * 建立websocket连接成功，将session和用户名保存
      * @param session
-     * @param config
      * @return
      */
     @OnOpen
-    public void onOpen(@PathParam("id") String id, Session session, EndpointConfig config) {
-        //获取用户名,将用户名和session保存在MatchUtil里的map中
-        matchUtil.addUser(id, session);
-        this.userId = id;
+    public void onOpen(@PathParam("id") String userId, Session session) {
+
+        log.info("ChatWebsocket open 有新连接加入 userId: {}", userId);
+
+        this.userId = userId;
+        this.session = session;
+        matchUtil.addUser(userId, session);
+
+        log.info("ChatWebsocket open 连接建立完成 userId: {}", userId);
     }
 
 
@@ -76,7 +80,14 @@ public class MatchEndPoint {
      */
     @OnError
     public void onError(Session session, Throwable error) {
-        log.error("onError", error.getMessage());
+        log.error("ChatWebsocket onError 发生了错误 userId: {}, errorMessage: {}", userId, error.getMessage());
+
+        matchUtil.removeUser(userId);
+        matchUtil.removeUserOnlineStatus(userId);
+        matchUtil.removeUserFromRoom(userId);
+        matchUtil.removeUserMatchInfo(userId);
+
+        log.info("ChatWebsocket onError 连接断开完成 userId: {}", userId);
     }
 
     /**
@@ -84,13 +95,16 @@ public class MatchEndPoint {
      * @param responseBody
      */
     public void sendToUser(Response<?> responseBody) {
-        log.info("ChatWebsocket sendMessageAll 消息群发开始");
+
+        log.info("ChatWebsocket sendMessageAll 消息群发开始 userId: {}, messageReply: {}", userId, JSON.toJSONString(responseBody));
 
         Set<String> receivers = responseBody.getResponseMsg().getReceivers();
         for (String receiver : receivers) {
-            MatchUtil.getOnlineUser(receiver).getAsyncRemote().sendText(JSON.toJSONString(responseBody));
+            Session session = MatchUtil.getOnlineUser(receiver);
+            session.getAsyncRemote().sendText(JSON.toJSONString(responseBody));
         }
-        log.info("ChatWebsocket sendMessageAll 消息群发结束");
+
+        log.info("ChatWebsocket sendMessageAll 消息群发结束 userId: {}", userId);
     }
 
     /**
@@ -99,6 +113,7 @@ public class MatchEndPoint {
      */
     @OnMessage
     public void onMessage(String message) {
+        log.info("message: {}", message);
         Response<?> jsonObject = JSON.parseObject(message, Response.class);
         MessageTypeEnum type = jsonObject.getResponseMsg().getType();
 
@@ -109,8 +124,6 @@ public class MatchEndPoint {
             case GAME_OVER -> gameOver(jsonObject);
             case CANCEL_MATCH -> cancelGame(jsonObject);
             default -> throw new GameServerException(GameServerError.WEBSOCKET_ADD_USER_FAILED);
-            //返回系统成功信息
-            //sendToUser(responseUtil.response_Success((String) httpSession.getAttribute("username")));
         }
     }
 
@@ -124,7 +137,6 @@ public class MatchEndPoint {
         matchUtil.removeUserOnlineStatus((String) httpSession.getAttribute("userName"));
     }
 
-
     /**
      * 用户进入匹配大厅时或上一场比赛结束后还没有进入下一场比赛调用的方法
      * @param jsonObject
@@ -133,7 +145,6 @@ public class MatchEndPoint {
 
         String username = jsonObject.getResponseMsg().getSender();
         StatusEnum statusEnum = matchUtil.getOnlineStatus(username);
-        Response<?> response = responseUtil.response_AddUser(username);
 
         if(statusEnum != null) {
             if(statusEnum.compareTo(StatusEnum.GAME_OVER) == 0) {
@@ -143,6 +154,7 @@ public class MatchEndPoint {
             matchUtil.setOnlineStatus_IDLE(username);
         }
 
+        Response<?> response = responseUtil.response_AddUser(username);
         sendToUser(response);
     }
 
@@ -151,7 +163,7 @@ public class MatchEndPoint {
      * @param jsonObject
      */
     @SneakyThrows
-    public void matchUser(Response jsonObject) {
+    public void matchUser(Response jsonObject){
         String username = jsonObject.getResponseMsg().getSender();
 
         lock.lock();
@@ -220,21 +232,19 @@ public class MatchEndPoint {
             matchUtil.setUserMatchInfo(username, JSON.toJSONString(senderInfo));
             matchUtil.setUserMatchInfo(receiver, JSON.toJSONString(receiverInfo));
             //调用函数生成返回信息并发送
-            Response<Object> response = responseUtil.response_matchUser(senderInfo, receiverInfo);
-            sendToUser(response);
-            response = responseUtil.response_matchUser(receiverInfo, senderInfo);
-            sendToUser(response);
+            sendToUser(responseUtil.response_matchUser(senderInfo, receiverInfo));
+            sendToUser(responseUtil.response_matchUser(receiverInfo, senderInfo));
 
-            log.info("ChatWebsocket matchUser 用户随机匹配对手结束 messageReply: {}", JSON.toJSONString(response));
+            log.info("ChatWebsocket matchUser 用户随机匹配对手结束");
 
         }, MATCH_TASK_NAME_PREFIX + username);
         matchThread.start();
     }
-
     /**
      * 游戏进行中执行信息更新的方法
      * @param message
      */
+    @SneakyThrows
     public void playGame(String message) {
         log.info("接收前端返回的答案，判断对错");
         //从传过来的json数据中获得用户名和用户选择的答案

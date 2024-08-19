@@ -17,11 +17,6 @@ public class MatchGameController {
     @Autowired
     ResponseUtil responseUtil;
 
-    @GetMapping("/getUsername")
-    public String getUsername(HttpSession httpSession) {
-        return (String) httpSession.getAttribute("username");
-    }
-
     @PostMapping("/login")
     public Response<?> login(@RequestBody User user, HttpSession httpSession) {
         if(user.getUsername() != null && Objects.equals(user.getPassword(), "123")) {

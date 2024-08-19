@@ -71,9 +71,9 @@ public class ResponseUtil {
             if(status.compareTo(StatusEnum.GAME_OVER) == 0){
                 response = setResponse(MessageCode.SUCCESS, responseMsg);
             } else {
-                setResponse(MessageCode.USER_IS_ONLINE, responseMsg);
+                response = setResponse(MessageCode.USER_IS_ONLINE, responseMsg);
             }
-            setResponse(MessageCode.SUCCESS, responseMsg);
+            response = setResponse(MessageCode.SUCCESS, responseMsg);
         }
 
         return response;
