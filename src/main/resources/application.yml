@@ -5,13 +5,13 @@ spring:
     name: MatchGame
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    password: 1234
-    username: root
-    url: jdbc:mysql://localhost:3306/match_game
+    password: ****
+    username: ****
+    url: ****
   data:
     redis:
-      host: 127.0.0.1
-      port: 6379
+      host: ****
+      port: ****
 mybatis-plus:
   global-config:
     db-config:
